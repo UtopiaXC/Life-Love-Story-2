@@ -1,34 +1,303 @@
 <template>
-  <div>
-    <b-card title="Kick start your project 🚀">
-      <b-card-text>All the best for your new project.</b-card-text>
-      <b-card-text>Please make sure to read our <b-link
-        href="https://pixinvent.com/demo/vuexy-vuejs-admin-dashboard-template/documentation/"
-        target="_blank"
-      >
-        Template Documentation
-      </b-link> to understand where to go from here and how to use our template.</b-card-text>
-    </b-card>
+    <content-with-sidebar class="blog-wrapper">
 
-    <b-card title="Want to integrate JWT? 🔒">
-      <b-card-text>We carefully crafted JWT flow so you can implement JWT with ease and with minimum efforts.</b-card-text>
-      <b-card-text>Please read our  JWT Documentation to get more out of JWT authentication.</b-card-text>
-    </b-card>
-  </div>
+        <!-- blogs -->
+        <b-row class="blog-list-wrapper match-height">
+            <b-col
+                v-for="blog in blogList"
+                :key="blog.img"
+                md="4"
+            >
+                <b-card
+                    tag="article"
+                    no-body
+                >
+                    <b-link :to="{ name: 'pages-blog-detail', params: { id: blog.id } }">
+                        <b-img
+                            :src="blog.img"
+                            :alt="blog.img.slice(5)"
+                            class="card-img-top"
+                        />
+                    </b-link>
+                    <b-card-body>
+                        <b-card-title>
+                            <b-link
+                                :to="{ name: 'pages-blog-detail', params: { id: blog.id } }"
+                                class="blog-title-truncate text-body-heading"
+                            >
+                                {{ blog.title }}
+                            </b-link>
+                        </b-card-title>
+                        <b-media no-body>
+                            <b-media-aside
+                                vertical-align="center"
+                                class="mr-50"
+                            >
+                                <b-avatar
+                                    href="javascript:void(0)"
+                                    size="24"
+                                    :src="blog.avatar"
+                                />
+                            </b-media-aside>
+                            <b-media-body>
+                                <small class="text-muted mr-50">by</small>
+                                <small>
+                                    <b-link class="text-body">{{ blog.userFullName }}</b-link>
+                                </small>
+                                <span class="text-muted ml-75 mr-50">|</span>
+                                <small class="text-muted">{{ blog.blogPosted }}</small>
+                            </b-media-body>
+                        </b-media>
+                        <div class="my-1 py-25">
+                            <b-link
+                                v-for="(tag,index) in blog.tags"
+                                :key="index"
+                            >
+                                <b-badge
+                                    pill
+                                    class="mr-75"
+                                    :variant="tagsColor(tag)"
+                                >
+                                    {{ tag }}
+                                </b-badge>
+                            </b-link>
+                        </div>
+                        <b-card-text class="blog-content-truncate">
+                            {{ blog.excerpt }}
+                        </b-card-text>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <b-link :to="{ path: `/pages/blog/${blog.id}#blogComment`}">
+                                <div class="d-flex align-items-center text-body">
+                                    <feather-icon
+                                        icon="MessageSquareIcon"
+                                        class="mr-50"
+                                    />
+                                    <span class="font-weight-bold">{{ kFormatter(blog.comment) }} 留言</span>
+                                </div>
+                            </b-link>
+                            <b-link
+                                :to="{ name: 'pages-blog-detail', params: { id: blog.id } }"
+                                class="font-weight-bold"
+                            >
+                                展开
+                            </b-link>
+                        </div>
+                    </b-card-body>
+                </b-card>
+            </b-col>
+            <b-col cols="12">
+                <!-- pagination -->
+                <div class="my-2">
+                    <b-pagination
+                        v-model="currentPage"
+                        align="center"
+                        :total-rows="rows"
+                        first-number
+                        last-number
+                        prev-class="prev-item"
+                        next-class="next-item"
+                    >
+                        <template #prev-text>
+                            <feather-icon
+                                icon="ChevronLeftIcon"
+                                size="18"
+                            />
+                        </template>
+                        <template #next-text>
+                            <feather-icon
+                                icon="ChevronRightIcon"
+                                size="18"
+                            />
+                        </template>
+                    </b-pagination>
+                </div>
+            </b-col>
+        </b-row>
+
+        <!--/ blogs -->
+
+        <!-- sidebar -->
+        <div
+            slot="sidebar"
+            class="blog-sidebar py-2 py-lg-0"
+        >
+            <!-- input search -->
+            <b-form-group class="blog-search">
+                <b-input-group class="input-group-merge">
+                    <b-form-input
+                        id="search-input"
+                        v-model="search_query"
+                        placeholder="搜索"
+                    />
+                    <b-input-group-append
+                        class="cursor-pointer"
+                        is-text
+                    >
+                        <feather-icon
+                            icon="SearchIcon"
+                        />
+                    </b-input-group-append>
+                </b-input-group>
+            </b-form-group>
+            <!--/ input search -->
+
+            <!-- recent posts -->
+            <div class="blog-recent-posts mt-3">
+                <h6 class="section-label mb-75">
+                    最新
+                </h6>
+                <b-media
+                    v-for="(recentpost,index) in blogSidebar.recentPosts"
+                    :key="recentpost.img"
+                    no-body
+                    :class="index? 'mt-2':''"
+                >
+                    <b-media-aside class="mr-2">
+                        <b-link :to="{ name: 'pages-blog-detail', params:{ id :recentpost.id } }">
+                            <b-img
+                                :src="recentpost.img"
+                                :alt="recentpost.img.slice(6)"
+                                width="100"
+                                rounded
+                                height="70"
+                            />
+                        </b-link>
+                    </b-media-aside>
+                    <b-media-body>
+                        <h6 class="blog-recent-post-title">
+                            <b-link
+                                :to="{ name: 'pages-blog-detail', params:{ id :recentpost.id } }"
+                                class="text-body-heading"
+                            >
+                                {{ recentpost.title }}
+                            </b-link>
+                        </h6>
+                        <span class="text-muted mb-0">
+              {{ recentpost.createdTime }}
+            </span>
+                    </b-media-body>
+                </b-media>
+            </div>
+            <!--/ recent posts -->
+
+            <!-- categories -->
+            <div class="blog-categories mt-3">
+                <h6 class="section-label mb-1">
+                    分类
+                </h6>
+
+                <div
+                    v-for="category in blogSidebar.categories"
+                    :key="category.icon"
+                    class="d-flex justify-content-start align-items-center mb-75"
+                >
+                    <b-link>
+                        <b-avatar
+                            rounded
+                            size="32"
+                            :variant="tagsColor(category.category)"
+                            class="mr-75"
+                        >
+                            <feather-icon
+                                :icon="category.icon"
+                                size="16"
+                            />
+                        </b-avatar>
+                    </b-link>
+                    <b-link>
+                        <div class="blog-category-title text-body">
+                            {{ category.category }}
+                        </div>
+                    </b-link>
+                </div>
+            </div>
+            <!--/ categories -->
+        </div>
+        <!--/ sidebar -->
+    </content-with-sidebar>
 </template>
 
 <script>
-import { BCard, BCardText, BLink } from 'bootstrap-vue'
+import {
+    BRow,
+    BCol,
+    BCard,
+    BFormInput,
+    BCardText,
+    BCardTitle,
+    BMedia,
+    BAvatar,
+    BMediaAside,
+    BMediaBody,
+    BImg,
+    BCardBody,
+    BLink,
+    BBadge,
+    BFormGroup,
+    BInputGroup,
+    BInputGroupAppend,
+    BPagination,
+} from 'bootstrap-vue'
+import { kFormatter } from '@core/utils/filter'
+import ContentWithSidebar from '@core/layouts/components/content-with-sidebar/ContentWithSidebar.vue'
+import {api} from "@core/utils/api";
 
 export default {
-  components: {
-    BCard,
-    BCardText,
-    BLink,
-  },
+    components: {
+        BRow,
+        BCol,
+        BCard,
+        BFormInput,
+        BCardText,
+        BCardBody,
+        BCardTitle,
+        BMedia,
+        BAvatar,
+        BMediaAside,
+        BMediaBody,
+        BLink,
+        BBadge,
+        BFormGroup,
+        BInputGroup,
+        BInputGroupAppend,
+        BImg,
+        BPagination,
+        ContentWithSidebar,
+    },
+    data() {
+        return {
+            search_query: '',
+            blogList: [],
+            blogSidebar: {},
+            currentPage: 1,
+            perPage: 1,
+            rows: 140,
+        }
+    },
+    created() {
+        this.$http.get(api('MAIN_PAGE_CARDS')).then(res => {
+            console.log(res.data.data)
+            this.blogList = res.data.data
+        })
+        this.$http.get(api('MAIN_PAGE_SLIDERS')).then(res => {
+            this.blogSidebar = res.data.data
+        })
+    },
+    methods: {
+        kFormatter,
+        tagsColor(tag) {
+            if (tag === '匿名') return 'light-info'
+            if (tag === 'Gaming') return 'light-danger'
+            if (tag === '吐槽') return 'light-primary'
+            if (tag === '表白') return 'light-warning'
+            if (tag === '二手') return 'light-success'
+            return 'light-primary'
+        },
+    },
 }
 </script>
 
-<style>
-
+<style lang="scss">
+@import '~@core/scss/vue/pages/page-blog.scss';
 </style>
