@@ -98,3 +98,9 @@ export default {
   },
 }
 </script>
+<style lang="css">
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC&display=swap');
+body{
+    font-family: "Montserrat",'Noto Serif SC', serif !important;
+}
+</style>
